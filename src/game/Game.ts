@@ -69,10 +69,12 @@ export class Game {
 		// Player
 		this.player = new Player();
 		this.player.setupPointerLock(this.renderer.domElement);
+		this.scene.add(this.player.camera);
 
 		// Weapon
 		this.weapon = new Weapon(this.scene);
-		this.weapon.onHit = (result) => {
+		this.weapon.attachGun(this.player.camera);
+		this.weapon.onHit = () => {
 			this.hud.showHitMarker();
 		};
 

@@ -7,6 +7,7 @@ import {
 import type { Player } from './Player';
 import type { Cube } from './Cube';
 import { Projectile } from './Projectile';
+import { GunModel } from './GunModel';
 
 export interface HitResult {
 	cube: Cube;
@@ -18,6 +19,7 @@ export class Weapon {
 	fireRate: number = FIRE_RATE;
 	range: number = WEAPON_RANGE;
 	projectiles: Projectile[] = [];
+	gunModel: GunModel | null = null;
 
 	private timeSinceLastShot: number = 0;
 	private scene: THREE.Scene;
@@ -28,6 +30,10 @@ export class Weapon {
 		this.scene = scene;
 	}
 
+	attachGun(camera: THREE.PerspectiveCamera): void {
+		this.gunModel = new GunModel(camera);
+	}
+
 	update(dt: number, player: Player, cubes: Cube[]): void {
 		this.timeSinceLastShot += dt;
 
@@ -35,6 +41,10 @@ export class Weapon {
 		if (player.isAlive && player.mouseDown && this.timeSinceLastShot >= this.fireRate) {
 			this.timeSinceLastShot = 0;
 			this.fire(player);
+		}
+
+		if (this.gunModel) {
+			this.gunModel.update(dt);
 		}
 
 		// Update all active projectiles
@@ -52,14 +62,25 @@ export class Weapon {
 	}
 
 	private fire(player: Player): void {
-		// Offset origin slightly forward so the bolt doesn't clip the camera
-		const origin = player.camera.position.clone()
-			.add(player.forward.clone().multiplyScalar(0.5));
+		const forward = player.forward;
+
+		// Spawn projectile from the gun barrel tip
+		let origin: THREE.Vector3;
+		if (this.gunModel) {
+			origin = this.gunModel.getBarrelTipWorld();
+			this.gunModel.fireRecoil();
+		} else {
+			origin = player.camera.position.clone().add(forward.clone().multiplyScalar(1.0));
+		}
+
+		// Aim toward crosshair center
+		const aimTarget = player.camera.position.clone().add(forward.clone().multiplyScalar(100));
+		const aimDir = aimTarget.clone().sub(origin).normalize();
 
 		const proj = new Projectile(
 			this.scene,
 			origin,
-			player.forward,
+			aimDir,
 			this.damage,
 			this.range,
 		);
