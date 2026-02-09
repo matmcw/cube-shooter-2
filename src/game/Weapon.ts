@@ -3,10 +3,10 @@ import {
 	FIRE_RATE,
 	WEAPON_DAMAGE,
 	WEAPON_RANGE,
-	COLOR_MUZZLE_FLASH,
 } from '../utils/constants';
 import type { Player } from './Player';
 import type { Cube } from './Cube';
+import { Projectile } from './Projectile';
 
 export interface HitResult {
 	cube: Cube;
@@ -17,98 +17,60 @@ export class Weapon {
 	damage: number = WEAPON_DAMAGE;
 	fireRate: number = FIRE_RATE;
 	range: number = WEAPON_RANGE;
+	projectiles: Projectile[] = [];
 
 	private timeSinceLastShot: number = 0;
-	private raycaster: THREE.Raycaster = new THREE.Raycaster();
-	private muzzleFlashLine: THREE.Line | null = null;
-	private flashTimer: number = 0;
+	private scene: THREE.Scene;
 
 	onHit: ((result: HitResult) => void) | null = null;
-	onMiss: (() => void) | null = null;
 
-	constructor(private scene: THREE.Scene) {}
+	constructor(scene: THREE.Scene) {
+		this.scene = scene;
+	}
 
 	update(dt: number, player: Player, cubes: Cube[]): void {
 		this.timeSinceLastShot += dt;
 
-		// Auto-fire
-		if (player.isAlive && this.timeSinceLastShot >= this.fireRate) {
+		// Fire when mouse is held and fire rate allows
+		if (player.isAlive && player.mouseDown && this.timeSinceLastShot >= this.fireRate) {
 			this.timeSinceLastShot = 0;
-			this.fire(player, cubes);
+			this.fire(player);
 		}
 
-		// Flash fade
-		if (this.muzzleFlashLine) {
-			this.flashTimer -= dt;
-			if (this.flashTimer <= 0) {
-				this.scene.remove(this.muzzleFlashLine);
-				this.muzzleFlashLine.geometry.dispose();
-				(this.muzzleFlashLine.material as THREE.Material).dispose();
-				this.muzzleFlashLine = null;
+		// Update all active projectiles
+		this.projectiles = this.projectiles.filter((proj) => {
+			const hitCube = proj.update(dt, cubes);
+			if (hitCube && this.onHit) {
+				this.onHit({ cube: hitCube, point: proj.mesh.position.clone() });
 			}
-		}
-	}
-
-	private fire(player: Player, cubes: Cube[]): void {
-		const origin = player.camera.position.clone();
-		const direction = player.forward;
-
-		this.raycaster.set(origin, direction);
-		this.raycaster.far = this.range;
-
-		// Collect all cube meshes
-		const cubeMeshes = cubes
-			.filter((c) => c.isAlive)
-			.map((c) => c.mesh);
-
-		const intersects = this.raycaster.intersectObjects(cubeMeshes, false);
-
-		if (intersects.length > 0) {
-			const hit = intersects[0];
-			const hitCube = cubes.find((c) => c.mesh === hit.object);
-			if (hitCube) {
-				this.showTracer(origin, hit.point);
-				if (this.onHit) {
-					this.onHit({ cube: hitCube, point: hit.point });
-				}
-				hitCube.takeDamage(this.damage);
+			if (!proj.alive) {
+				proj.dispose(this.scene);
+				return false;
 			}
-		} else {
-			// Show tracer to max range
-			const endPoint = origin.clone().add(direction.clone().multiplyScalar(this.range));
-			this.showTracer(origin, endPoint);
-			if (this.onMiss) {
-				this.onMiss();
-			}
-		}
-	}
-
-	private showTracer(start: THREE.Vector3, end: THREE.Vector3): void {
-		if (this.muzzleFlashLine) {
-			this.scene.remove(this.muzzleFlashLine);
-			this.muzzleFlashLine.geometry.dispose();
-			(this.muzzleFlashLine.material as THREE.Material).dispose();
-		}
-
-		const points = [start, end];
-		const geo = new THREE.BufferGeometry().setFromPoints(points);
-		const mat = new THREE.LineBasicMaterial({
-			color: COLOR_MUZZLE_FLASH,
-			transparent: true,
-			opacity: 0.6,
+			return true;
 		});
-		this.muzzleFlashLine = new THREE.Line(geo, mat);
-		this.scene.add(this.muzzleFlashLine);
-		this.flashTimer = 0.05;
+	}
+
+	private fire(player: Player): void {
+		// Offset origin slightly forward so the bolt doesn't clip the camera
+		const origin = player.camera.position.clone()
+			.add(player.forward.clone().multiplyScalar(0.5));
+
+		const proj = new Projectile(
+			this.scene,
+			origin,
+			player.forward,
+			this.damage,
+			this.range,
+		);
+		this.projectiles.push(proj);
 	}
 
 	reset(): void {
 		this.timeSinceLastShot = 0;
-		if (this.muzzleFlashLine) {
-			this.scene.remove(this.muzzleFlashLine);
-			this.muzzleFlashLine.geometry.dispose();
-			(this.muzzleFlashLine.material as THREE.Material).dispose();
-			this.muzzleFlashLine = null;
+		for (const proj of this.projectiles) {
+			proj.dispose(this.scene);
 		}
+		this.projectiles = [];
 	}
 }

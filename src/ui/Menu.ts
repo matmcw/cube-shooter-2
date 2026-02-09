@@ -71,7 +71,9 @@ export class Menu {
 			">
 				<div><b>WASD</b> - Move</div>
 				<div><b>SPACE</b> - Jump</div>
-				<div><b>MOUSE</b> - Aim (auto-fire)</div>
+				<div><b>MOUSE</b> - Aim</div>
+				<div><b>HOLD CLICK</b> - Fire</div>
+				<div><b>ESC</b> - Pause</div>
 			</div>
 			<button id="start-btn" style="
 				padding: 16px 50px;

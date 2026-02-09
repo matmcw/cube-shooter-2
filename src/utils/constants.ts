@@ -5,11 +5,11 @@ export const PLATFORM_THICKNESS = 2;
 export const PLATFORM_Y = 0;
 
 /* ───────────────────── Player ───────────────────── */
-export const PLAYER_HEIGHT = 1.8;
+export const PLAYER_HEIGHT = 2.4;
 export const PLAYER_RADIUS = 0.4;
 export const PLAYER_SPEED = 10;
 export const PLAYER_SPRINT_MULT = 1.5;
-export const PLAYER_JUMP_FORCE = 8;
+export const PLAYER_JUMP_FORCE = 12;
 export const PLAYER_MAX_HEALTH = 100;
 export const PLAYER_START_Y = PLATFORM_Y + PLATFORM_THICKNESS / 2 + PLAYER_HEIGHT / 2;
 
@@ -18,9 +18,16 @@ export const GRAVITY = -20;
 export const GROUND_LEVEL = PLATFORM_Y + PLATFORM_THICKNESS / 2;
 
 /* ───────────────────── Weapon ───────────────────── */
-export const FIRE_RATE = 0.2; // seconds between shots
+export const FIRE_RATE = 0.15; // seconds between shots
 export const WEAPON_DAMAGE = 25;
 export const WEAPON_RANGE = 200;
+
+/* ───────────────────── Projectile ───────────────────── */
+export const PROJECTILE_SPEED = 120;
+export const PROJECTILE_LENGTH = 1.5;
+export const PROJECTILE_RADIUS = 0.06;
+export const COLOR_PROJECTILE = 0xff2020;
+export const COLOR_PROJECTILE_EMISSIVE = 0xff0000;
 
 /* ───────────────────── Cubes (enemies) ───────────────────── */
 export const CUBE_SIZE = 1.0;

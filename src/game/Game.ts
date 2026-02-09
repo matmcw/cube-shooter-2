@@ -7,6 +7,7 @@ import { WaveManager } from './WaveManager';
 import { HUD } from '../ui/HUD';
 import { Shop, type Upgrade } from '../ui/Shop';
 import { Menu } from '../ui/Menu';
+import { PauseMenu } from '../ui/PauseMenu';
 import {
 	COLOR_SKY,
 	PLAYER_MAX_HEALTH,
@@ -18,7 +19,7 @@ import {
 	CUBE_CONTACT_DAMAGE,
 } from '../utils/constants';
 
-type GameState = 'title' | 'playing' | 'shop' | 'dead';
+type GameState = 'title' | 'playing' | 'shop' | 'dead' | 'paused';
 
 export class Game {
 	private renderer: THREE.WebGLRenderer;
@@ -30,6 +31,7 @@ export class Game {
 	private hud: HUD;
 	private shop: Shop;
 	private menu: Menu;
+	private pauseMenu: PauseMenu;
 	private coins: Coin[] = [];
 	private state: GameState = 'title';
 	private clock: THREE.Clock;
@@ -99,6 +101,22 @@ export class Game {
 		this.menu.onRestart = () => this.restartGame();
 		this.menu.showTitle();
 
+		this.pauseMenu = new PauseMenu();
+		this.pauseMenu.mount(appEl);
+		this.pauseMenu.onResume = () => this.resumeGame();
+		this.pauseMenu.onQuit = () => this.quitToMenu();
+
+		// Escape key for pause
+		document.addEventListener('keydown', (e) => {
+			if (e.code === 'Escape') {
+				if (this.state === 'playing') {
+					this.pauseGame();
+				} else if (this.state === 'paused') {
+					this.resumeGame();
+				}
+			}
+		});
+
 		// Resize handler
 		window.addEventListener('resize', () => this.handleResize());
 
@@ -166,6 +184,32 @@ export class Game {
 		this.state = 'playing';
 		this.waveManager.closeShop();
 		this.menu.announceWave(this.waveManager.waveNumber);
+	}
+
+	private pauseGame(): void {
+		this.state = 'paused';
+		this.pauseMenu.show();
+		this.hud.hide();
+		document.exitPointerLock();
+		this.clock.stop();
+	}
+
+	private resumeGame(): void {
+		this.pauseMenu.hide();
+		this.hud.show();
+		this.state = 'playing';
+		this.clock.start();
+	}
+
+	private quitToMenu(): void {
+		this.pauseMenu.hide();
+		this.hud.hide();
+		this.waveManager.reset();
+		this.weapon.reset();
+		this.clearCoins();
+		this.state = 'title';
+		this.menu.showTitle();
+		this.clock.start();
 	}
 
 	private handleUpgrade(upgrade: Upgrade): void {
@@ -247,6 +291,9 @@ export class Game {
 				break;
 
 			case 'dead':
+				break;
+
+			case 'paused':
 				break;
 		}
 

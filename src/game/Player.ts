@@ -18,6 +18,8 @@ export class Player {
 	coins: number;
 	isAlive: boolean;
 
+	mouseDown: boolean = false;
+
 	private velocity: THREE.Vector3 = new THREE.Vector3();
 	private onGround: boolean = false;
 	private keys: Record<string, boolean> = {};
@@ -79,6 +81,21 @@ export class Player {
 
 		document.addEventListener('pointerlockchange', () => {
 			this.isLocked = document.pointerLockElement === canvas;
+			if (!this.isLocked) {
+				this.mouseDown = false;
+			}
+		});
+
+		document.addEventListener('mousedown', (e) => {
+			if (this.isLocked && e.button === 0) {
+				this.mouseDown = true;
+			}
+		});
+
+		document.addEventListener('mouseup', (e) => {
+			if (e.button === 0) {
+				this.mouseDown = false;
+			}
 		});
 
 		document.addEventListener('mousemove', (e) => {
