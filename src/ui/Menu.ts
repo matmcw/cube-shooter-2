@@ -70,6 +70,7 @@ export class Menu {
 				margin-bottom: 30px;
 			">
 				<div><b>WASD</b> - Move</div>
+				<div><b>SHIFT / CTRL</b> - Sprint</div>
 				<div><b>SPACE</b> - Jump</div>
 				<div><b>MOUSE</b> - Aim</div>
 				<div><b>HOLD CLICK</b> - Fire</div>

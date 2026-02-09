@@ -12,16 +12,12 @@ const projectileGeo = new THREE.CylinderGeometry(
 	PROJECTILE_RADIUS,
 	PROJECTILE_RADIUS,
 	PROJECTILE_LENGTH,
-	6,
+	16,
 );
 projectileGeo.rotateX(Math.PI / 2);
 
-const projectileMat = new THREE.MeshStandardMaterial({
+const projectileMat = new THREE.MeshBasicMaterial({
 	color: COLOR_PROJECTILE,
-	emissive: COLOR_PROJECTILE_EMISSIVE,
-	emissiveIntensity: 2.0,
-	roughness: 0.1,
-	metalness: 0.5,
 });
 
 export class Projectile {

@@ -5,7 +5,7 @@ export const PLATFORM_THICKNESS = 2;
 export const PLATFORM_Y = 0;
 
 /* ───────────────────── Player ───────────────────── */
-export const PLAYER_HEIGHT = 2.4;
+export const PLAYER_HEIGHT = 3;
 export const PLAYER_RADIUS = 0.4;
 export const PLAYER_SPEED = 10;
 export const PLAYER_SPRINT_MULT = 1.5;
@@ -24,8 +24,8 @@ export const WEAPON_RANGE = 200;
 
 /* ───────────────────── Projectile ───────────────────── */
 export const PROJECTILE_SPEED = 120;
-export const PROJECTILE_LENGTH = 1.5;
-export const PROJECTILE_RADIUS = 0.06;
+export const PROJECTILE_LENGTH = 3.0;
+export const PROJECTILE_RADIUS = 0.045;
 export const COLOR_PROJECTILE = 0xff2020;
 export const COLOR_PROJECTILE_EMISSIVE = 0xff0000;
 
@@ -48,7 +48,7 @@ export const COIN_LIFETIME = 15; // seconds before despawning
 export const WAVE_BASE_COUNT = 5;
 export const WAVE_COUNT_INCREASE = 3;
 export const WAVE_SPAWN_INTERVAL = 1.2; // seconds between cube spawns
-export const WAVE_BREAK_DURATION = 5; // seconds between waves (shop time)
+export const WAVE_BREAK_DURATION = 1; // seconds between last kill and shop opening
 
 /* ───────────────────── Colors ───────────────────── */
 export const COLOR_PLATFORM = 0x1a1a2e;

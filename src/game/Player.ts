@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {
 	PLAYER_HEIGHT,
 	PLAYER_SPEED,
+	PLAYER_SPRINT_MULT,
 	PLAYER_JUMP_FORCE,
 	PLAYER_MAX_HEALTH,
 	PLAYER_START_Y,
@@ -155,8 +156,9 @@ export class Player {
 			moveDir.normalize();
 		}
 
-		// Horizontal movement
-		const speed = PLAYER_SPEED;
+		// Horizontal movement (sprint with Shift or Ctrl)
+		const sprinting = this.keys['ShiftLeft'] || this.keys['ShiftRight'] || this.keys['ControlLeft'] || this.keys['ControlRight'];
+		const speed = PLAYER_SPEED * (sprinting ? PLAYER_SPRINT_MULT : 1);
 		this.velocity.x = moveDir.x * speed;
 		this.velocity.z = moveDir.z * speed;
 
