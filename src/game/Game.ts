@@ -19,7 +19,7 @@ import {
 	CUBE_CONTACT_DAMAGE,
 } from '../utils/constants';
 
-type GameState = 'title' | 'playing' | 'shop' | 'dead' | 'paused';
+type GameState = 'title' | 'playing' | 'coin_collect' | 'shop' | 'dead' | 'paused';
 
 export class Game {
 	private renderer: THREE.WebGLRenderer;
@@ -293,6 +293,10 @@ export class Game {
 				// Scene still renders but nothing moves
 				break;
 
+			case 'coin_collect':
+				this.updateCoinCollect(dt);
+				break;
+
 			case 'dead':
 				break;
 
@@ -395,6 +399,34 @@ export class Game {
 			);
 		} else if (state === 'wave_clear') {
 			this.hud.updateWaveText(`Wave ${this.waveManager.waveNumber} Complete!`);
+		} else if (state === 'coin_collect') {
+			this.state = 'coin_collect';
+		}
+	}
+
+	private updateCoinCollect(dt: number): void {
+		const playerPos = this.player.position;
+		const collectSpeed = 40;
+
+		this.coins = this.coins.filter((coin) => {
+			const direction = playerPos.clone().sub(coin.mesh.position).normalize();
+			coin.mesh.position.add(direction.multiplyScalar(collectSpeed * dt));
+			coin.mesh.rotation.y += dt * 10;
+
+			const dist = coin.mesh.position.distanceTo(playerPos);
+			if (dist < 1.5) {
+				this.player.addCoins(coin.value);
+				this.totalCoinsEarned += coin.value;
+				coin.dispose(this.scene);
+				return false;
+			}
+			return true;
+		});
+
+		this.hud.updateCoins(this.player.coins);
+
+		if (this.coins.length === 0) {
+			this.waveManager.finishCoinCollect();
 		}
 	}
 }

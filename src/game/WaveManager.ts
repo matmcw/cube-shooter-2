@@ -11,7 +11,7 @@ import {
 import { randomOnPlatformEdge } from '../utils/helpers';
 import { Cube } from './Cube';
 
-export type WaveState = 'pre_wave' | 'spawning' | 'active' | 'wave_clear' | 'shop';
+export type WaveState = 'pre_wave' | 'spawning' | 'active' | 'wave_clear' | 'coin_collect' | 'shop';
 
 export class WaveManager {
 	waveNumber: number = 0;
@@ -85,9 +85,12 @@ export class WaveManager {
 			case 'wave_clear':
 				this.breakTimer -= dt;
 				if (this.breakTimer <= 0) {
-					this.state = 'shop';
-					if (this.onShopOpen) this.onShopOpen();
+					this.state = 'coin_collect';
 				}
+				break;
+
+			case 'coin_collect':
+				// Game.ts drives coin collection and calls finishCoinCollect() when done
 				break;
 
 			case 'shop':
@@ -132,6 +135,13 @@ export class WaveManager {
 		this.waveNumber = 0;
 		this.state = 'pre_wave';
 		this.cubesToSpawn = 0;
+	}
+
+	finishCoinCollect(): void {
+		if (this.state === 'coin_collect') {
+			this.state = 'shop';
+			if (this.onShopOpen) this.onShopOpen();
+		}
 	}
 
 	closeShop(): void {
