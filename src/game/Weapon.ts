@@ -20,14 +20,17 @@ export class Weapon {
 	range: number = WEAPON_RANGE;
 	projectiles: Projectile[] = [];
 	gunModel: GunModel | null = null;
+	sceneObjects: THREE.Object3D[] = [];
 
 	private timeSinceLastShot: number = 0;
 	private scene: THREE.Scene;
+	private raycaster: THREE.Raycaster = new THREE.Raycaster();
 
 	onHit: ((result: HitResult) => void) | null = null;
 
 	constructor(scene: THREE.Scene) {
 		this.scene = scene;
+		this.raycaster.far = WEAPON_RANGE;
 	}
 
 	attachGun(camera: THREE.PerspectiveCamera): void {
@@ -40,7 +43,7 @@ export class Weapon {
 		// Fire when mouse is held and fire rate allows
 		if (player.isAlive && player.mouseDown && this.timeSinceLastShot >= this.fireRate) {
 			this.timeSinceLastShot = 0;
-			this.fire(player);
+			this.fire(player, cubes);
 		}
 
 		if (this.gunModel) {
@@ -61,20 +64,38 @@ export class Weapon {
 		});
 	}
 
-	private fire(player: Player): void {
+	private fire(player: Player, cubes: Cube[]): void {
 		const forward = player.forward;
+		const camPos = player.camera.position;
+
+		// Raycast from camera center to find what the crosshair is pointing at
+		this.raycaster.set(camPos, forward);
+
+		// Collect raycast targets: alive cubes + scene objects (platform, etc.)
+		const targets: THREE.Object3D[] = [
+			...cubes.filter((c) => c.isAlive).map((c) => c.mesh),
+			...this.sceneObjects,
+		];
+		const hits = this.raycaster.intersectObjects(targets, true);
+
+		// Determine aim point: hit location, or far point if aiming at sky
+		let aimTarget: THREE.Vector3;
+		if (hits.length > 0) {
+			aimTarget = hits[0].point;
+		} else {
+			aimTarget = camPos.clone().add(forward.clone().multiplyScalar(this.range));
+		}
 
 		// Spawn projectile from the gun barrel tip
 		let origin: THREE.Vector3;
 		if (this.gunModel) {
+			player.camera.updateWorldMatrix(true, true);
 			origin = this.gunModel.getBarrelTipWorld();
 			this.gunModel.fireRecoil();
 		} else {
-			origin = player.camera.position.clone().add(forward.clone().multiplyScalar(1.0));
+			origin = camPos.clone().add(forward.clone().multiplyScalar(1.0));
 		}
 
-		// Aim toward crosshair center
-		const aimTarget = player.camera.position.clone().add(forward.clone().multiplyScalar(100));
 		const aimDir = aimTarget.clone().sub(origin).normalize();
 
 		const proj = new Projectile(
