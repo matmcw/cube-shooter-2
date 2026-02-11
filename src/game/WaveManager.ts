@@ -9,7 +9,7 @@ import {
 	PLATFORM_DEPTH,
 } from '../utils/constants';
 import { randomOnPlatformEdge } from '../utils/helpers';
-import { Cube } from './Cube';
+import { Cube, type CubeType } from './Cube';
 
 export type WaveState = 'pre_wave' | 'spawning' | 'active' | 'wave_clear' | 'coin_collect' | 'shop';
 
@@ -106,6 +106,7 @@ export class WaveManager {
 	private spawnCube(): void {
 		const healthMult = 1 + (this.waveNumber - 1) * 0.15;
 		const speedMult = 1 + (this.waveNumber - 1) * 0.08;
+		const type = this.pickCubeType();
 
 		const position = randomOnPlatformEdge(
 			PLATFORM_WIDTH,
@@ -113,8 +114,25 @@ export class WaveManager {
 			CUBE_SPAWN_DISTANCE,
 		);
 
-		const cube = new Cube(this.scene, position, healthMult, speedMult);
+		const cube = new Cube(this.scene, position, healthMult, speedMult, type);
 		this.cubes.push(cube);
+	}
+
+	private pickCubeType(): CubeType {
+		const pool: CubeType[] = [];
+		const w = this.waveNumber;
+
+		// Normal cubes always in the pool, weighted heavier early on
+		const normalWeight = w < 5 ? 4 : w < 8 ? 3 : 2;
+		for (let i = 0; i < normalWeight; i++) pool.push('normal');
+
+		if (w >= 3) pool.push('jumper');
+		if (w >= 4) pool.push('zigzag');
+		if (w >= 5) pool.push('charger');
+		if (w >= 7) pool.push('teleporter');
+		if (w >= 8) pool.push('tank');
+
+		return pool[Math.floor(Math.random() * pool.length)];
 	}
 
 	private updateCubes(dt: number, playerPosition: THREE.Vector3): void {
