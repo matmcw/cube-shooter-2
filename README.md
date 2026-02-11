@@ -2,7 +2,7 @@
 
 A 3D first-person wave-based shooter built with Three.js and TypeScript. Survive waves of cube enemies, collect coins, and buy upgrades between rounds.
 
-**Play it here:** [https://matthewd045yl.github.io/cube-shooter-2/](https://matthewd045yl.github.io/cube-shooter-2/)
+**Play it here:** [https://matmcw.github.io/cube-shooter-2/](https://matmcw.github.io/cube-shooter-2/)
 
 ## Gameplay
 
