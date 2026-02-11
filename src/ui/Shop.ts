@@ -23,7 +23,11 @@ export class Shop {
 	];
 
 	onPurchase: ((upgrade: Upgrade) => void) | null = null;
+	onHeal: (() => void) | null = null;
 	onClose: (() => void) | null = null;
+
+	private playerHealth: number = 100;
+	private playerMaxHealth: number = 100;
 
 	constructor() {
 		this.container = document.createElement('div');
@@ -122,7 +126,9 @@ export class Shop {
 		parent.appendChild(this.container);
 	}
 
-	show(coins: number): void {
+	show(coins: number, health?: number, maxHealth?: number): void {
+		if (health !== undefined) this.playerHealth = health;
+		if (maxHealth !== undefined) this.playerMaxHealth = maxHealth;
 		this.coinDisplay.textContent = `${coins}`;
 		this.renderUpgrades(coins);
 		this.container.style.display = 'flex';
@@ -134,6 +140,63 @@ export class Shop {
 
 	private renderUpgrades(coins: number): void {
 		this.upgradeList.innerHTML = '';
+
+		// Heal option
+		const healCost = this.getHealCost();
+		const needsHeal = this.playerHealth < this.playerMaxHealth;
+		const canHeal = needsHeal && coins >= healCost;
+		{
+			const row = document.createElement('div');
+			row.style.cssText = `
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 10px 14px;
+				background: rgba(78, 204, 163, 0.08);
+				border: 1px solid rgba(78, 204, 163, 0.25);
+				border-radius: 6px;
+				margin-bottom: 4px;
+			`;
+
+			const info = document.createElement('div');
+			const healthPct = Math.round((this.playerHealth / this.playerMaxHealth) * 100);
+			info.innerHTML = `
+				<div style="color: #4ecca3; font-weight: bold; font-size: 14px;">Refill Health</div>
+				<div style="color: rgba(255,255,255,0.5); font-size: 12px;">Restore to full (${healthPct}% → 100%)</div>
+			`;
+
+			const buyBtn = document.createElement('button');
+			buyBtn.textContent = !needsHeal ? 'FULL' : `${healCost}`;
+			buyBtn.style.cssText = `
+				padding: 6px 16px;
+				border: none;
+				border-radius: 4px;
+				font-weight: bold;
+				font-size: 13px;
+				cursor: ${canHeal ? 'pointer' : 'default'};
+				background: ${!needsHeal ? 'rgba(78, 204, 163, 0.3)' : canHeal ? '#4ecca3' : 'rgba(100,100,100,0.3)'};
+				color: ${!needsHeal ? 'rgba(255,255,255,0.3)' : canHeal ? '#1a1a2e' : 'rgba(255,255,255,0.3)'};
+				pointer-events: auto;
+				min-width: 60px;
+				transition: transform 0.1s;
+			`;
+
+			if (canHeal) {
+				buyBtn.addEventListener('click', () => {
+					if (this.onHeal) this.onHeal();
+				});
+				buyBtn.addEventListener('mouseenter', () => {
+					buyBtn.style.transform = 'scale(1.05)';
+				});
+				buyBtn.addEventListener('mouseleave', () => {
+					buyBtn.style.transform = 'scale(1)';
+				});
+			}
+
+			row.appendChild(info);
+			row.appendChild(buyBtn);
+			this.upgradeList.appendChild(row);
+		}
 
 		for (const upgrade of this.upgrades) {
 			const row = document.createElement('div');
@@ -195,6 +258,11 @@ export class Shop {
 
 	getUpgradeCost(upgrade: Upgrade): number {
 		return Math.round(upgrade.cost * (1 + upgrade.currentLevel * 0.5));
+	}
+
+	getHealCost(): number {
+		const missing = this.playerMaxHealth - this.playerHealth;
+		return Math.round(missing * 0.5);
 	}
 
 	reset(): void {

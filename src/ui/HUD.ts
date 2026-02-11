@@ -166,8 +166,8 @@ export class HUD {
 		this.coinDisplay.textContent = `${coins}`;
 	}
 
-	updateWave(wave: number, enemiesLeft: number, totalEnemies: number): void {
-		this.waveDisplay.textContent = `Wave ${wave}  |  ${enemiesLeft} / ${totalEnemies}`;
+	updateWave(wave: number, remaining: number, total: number): void {
+		this.waveDisplay.textContent = `Wave ${wave}  |  ${remaining} / ${total}`;
 	}
 
 	updateWaveText(text: string): void {

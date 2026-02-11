@@ -44,6 +44,10 @@ export class WaveManager {
 		return this.cubes.filter((c) => c.isAlive).length;
 	}
 
+	getRemainingCount(): number {
+		return this.cubes.filter((c) => c.isAlive).length + this.cubesToSpawn;
+	}
+
 	getTotalForWave(): number {
 		return WAVE_BASE_COUNT + (this.waveNumber - 1) * WAVE_COUNT_INCREASE;
 	}

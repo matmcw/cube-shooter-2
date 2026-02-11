@@ -95,6 +95,7 @@ export class Game {
 		this.shop = new Shop();
 		this.shop.mount(appEl);
 		this.shop.onPurchase = (upgrade) => this.handleUpgrade(upgrade);
+		this.shop.onHeal = () => this.handleHeal();
 		this.shop.onClose = () => this.closeShop();
 
 		this.menu = new Menu();
@@ -177,7 +178,7 @@ export class Game {
 
 	private openShop(): void {
 		this.state = 'shop';
-		this.shop.show(this.player.coins);
+		this.shop.show(this.player.coins, this.player.health, this.player.maxHealth);
 		document.exitPointerLock();
 	}
 
@@ -250,8 +251,17 @@ export class Game {
 				break;
 		}
 
-		// Re-render shop with updated coins
-		this.shop.show(this.player.coins);
+		// Re-render shop with updated coins/health
+		this.shop.show(this.player.coins, this.player.health, this.player.maxHealth);
+	}
+
+	private handleHeal(): void {
+		const cost = this.shop.getHealCost();
+		if (this.player.coins < cost || this.player.health >= this.player.maxHealth) return;
+
+		this.player.coins -= cost;
+		this.player.health = this.player.maxHealth;
+		this.shop.show(this.player.coins, this.player.health, this.player.maxHealth);
 	}
 
 	private resetUpgradeStats(): void {
@@ -393,7 +403,7 @@ export class Game {
 		} else if (state === 'spawning' || state === 'active') {
 			this.hud.updateWave(
 				this.waveManager.waveNumber,
-				this.waveManager.getCubeCount(),
+				this.waveManager.getRemainingCount(),
 				this.waveManager.getTotalForWave(),
 			);
 		} else if (state === 'wave_clear') {
