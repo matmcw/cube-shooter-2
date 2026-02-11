@@ -3,6 +3,7 @@ import {
 	FIRE_RATE,
 	WEAPON_DAMAGE,
 	WEAPON_RANGE,
+	GROUND_LEVEL,
 } from '../utils/constants';
 import type { Player } from './Player';
 import type { Cube } from './Cube';
@@ -20,7 +21,6 @@ export class Weapon {
 	range: number = WEAPON_RANGE;
 	projectiles: Projectile[] = [];
 	gunModel: GunModel | null = null;
-	sceneObjects: THREE.Object3D[] = [];
 
 	private timeSinceLastShot: number = 0;
 	private scene: THREE.Scene;
@@ -64,26 +64,29 @@ export class Weapon {
 		});
 	}
 
+	private groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -GROUND_LEVEL);
+
 	private fire(player: Player, cubes: Cube[]): void {
-		const forward = player.forward;
-		const camPos = player.camera.position;
-
 		// Raycast from camera center to find what the crosshair is pointing at
-		this.raycaster.set(camPos, forward);
+		this.raycaster.setFromCamera(new THREE.Vector2(0, 0), player.camera);
 
-		// Collect raycast targets: alive cubes + scene objects (platform, etc.)
-		const targets: THREE.Object3D[] = [
-			...cubes.filter((c) => c.isAlive).map((c) => c.mesh),
-			...this.sceneObjects,
-		];
-		const hits = this.raycaster.intersectObjects(targets, true);
+		// Check cubes first
+		const cubeTargets = cubes.filter((c) => c.isAlive).map((c) => c.mesh);
+		const hits = this.raycaster.intersectObjects(cubeTargets, false);
 
-		// Determine aim point: hit location, or far point if aiming at sky
 		let aimTarget: THREE.Vector3;
 		if (hits.length > 0) {
 			aimTarget = hits[0].point;
 		} else {
-			aimTarget = camPos.clone().add(forward.clone().multiplyScalar(this.range));
+			// Check intersection with ground plane
+			const groundHit = new THREE.Vector3();
+			if (this.raycaster.ray.intersectPlane(this.groundPlane, groundHit)) {
+				aimTarget = groundHit;
+			} else {
+				// Aiming at sky — use far point along camera direction
+				const forward = player.forward;
+				aimTarget = player.camera.position.clone().add(forward.multiplyScalar(this.range));
+			}
 		}
 
 		// Spawn projectile from the gun barrel tip
@@ -93,7 +96,7 @@ export class Weapon {
 			origin = this.gunModel.getBarrelTipWorld();
 			this.gunModel.fireRecoil();
 		} else {
-			origin = camPos.clone().add(forward.clone().multiplyScalar(1.0));
+			origin = player.camera.position.clone().add(player.forward.multiplyScalar(1.0));
 		}
 
 		const aimDir = aimTarget.clone().sub(origin).normalize();

@@ -74,7 +74,6 @@ export class Game {
 		// Weapon
 		this.weapon = new Weapon(this.scene);
 		this.weapon.attachGun(this.player.camera);
-		this.weapon.sceneObjects = [this.platform.group];
 		this.weapon.onHit = () => {
 			this.hud.showHitMarker();
 		};
