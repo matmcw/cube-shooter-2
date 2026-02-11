@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-	base: './',
+	base: '/cube-shooter-2/',
 });
