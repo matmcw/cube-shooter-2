@@ -30,6 +30,7 @@ export class Projectile {
 	maxDistance: number;
 
 	private light: THREE.PointLight;
+	private raycaster: THREE.Raycaster = new THREE.Raycaster();
 
 	constructor(
 		scene: THREE.Scene,
@@ -56,10 +57,13 @@ export class Projectile {
 	update(dt: number, cubes: Cube[]): Cube | null {
 		if (!this.alive) return null;
 
+		const prevPos = this.mesh.position.clone();
 		const step = this.direction.clone().multiplyScalar(this.speed * dt);
+		const stepLen = step.length();
+
 		this.mesh.position.add(step);
 		this.light.position.copy(this.mesh.position);
-		this.distanceTraveled += step.length();
+		this.distanceTraveled += stepLen;
 
 		// Check max distance
 		if (this.distanceTraveled >= this.maxDistance) {
@@ -67,9 +71,27 @@ export class Projectile {
 			return null;
 		}
 
-		// Check collision with cubes
-		for (const cube of cubes) {
-			if (!cube.isAlive) continue;
+		// Swept ray collision: raycast from previous position along travel path
+		const aliveCubes = cubes.filter((c) => c.isAlive);
+		const cubeMeshes = aliveCubes.map((c) => c.mesh);
+
+		this.raycaster.set(prevPos, this.direction);
+		this.raycaster.near = 0;
+		this.raycaster.far = stepLen;
+		const hits = this.raycaster.intersectObjects(cubeMeshes, false);
+
+		if (hits.length > 0) {
+			const hitMesh = hits[0].object;
+			const hitCube = aliveCubes.find((c) => c.mesh === hitMesh);
+			if (hitCube) {
+				hitCube.takeDamage(this.damage);
+				this.alive = false;
+				return hitCube;
+			}
+		}
+
+		// Fallback: distance check for cases where projectile spawns inside a cube
+		for (const cube of aliveCubes) {
 			const dist = this.mesh.position.distanceTo(cube.mesh.position);
 			if (dist < 0.8) {
 				cube.takeDamage(this.damage);
