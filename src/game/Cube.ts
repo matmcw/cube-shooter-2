@@ -26,12 +26,12 @@ interface TypeConfig {
 }
 
 const TYPE_CONFIGS: Record<CubeType, TypeConfig> = {
-	normal:     { color: COLOR_CUBE_BASE,       healthMult: 1,   speedMult: 1,   size: 1 },
+	normal:     { color: COLOR_CUBE_BASE,       healthMult: 2,   speedMult: 1,   size: 1 },
 	jumper:     { color: COLOR_CUBE_JUMPER,      healthMult: 0.8, speedMult: 1,   size: 1 },
 	zigzag:     { color: COLOR_CUBE_ZIGZAG,      healthMult: 0.7, speedMult: 1.3, size: 1 },
 	teleporter: { color: COLOR_CUBE_TELEPORTER,  healthMult: 0.6, speedMult: 0.8, size: 1 },
-	tank:       { color: COLOR_CUBE_TANK,        healthMult: 5,   speedMult: 0.5, size: 1.4 },
-	charger:    { color: COLOR_CUBE_CHARGER,     healthMult: 1,   speedMult: 1,   size: 1 },
+	tank:       { color: COLOR_CUBE_TANK,        healthMult: 15,  speedMult: 0.7, size: 1.4 },
+	charger:    { color: COLOR_CUBE_CHARGER,     healthMult: 2,   speedMult: 1,   size: 1 },
 };
 
 export class Cube {
@@ -229,8 +229,15 @@ export class Cube {
 
 			this.mesh.rotation.x += dt * 10;
 
-			// Stop after traveling far enough and re-aim
-			if (this.chargeDistance >= 30) {
+			// Stop at platform edge or after traveling far enough
+			const halfW = PLATFORM_WIDTH / 2 - 1;
+			const halfD = PLATFORM_DEPTH / 2 - 1;
+			const atEdge = Math.abs(this.mesh.position.x) >= halfW
+				|| Math.abs(this.mesh.position.z) >= halfD;
+			this.mesh.position.x = Math.max(-halfW, Math.min(halfW, this.mesh.position.x));
+			this.mesh.position.z = Math.max(-halfD, Math.min(halfD, this.mesh.position.z));
+
+			if (this.chargeDistance >= 30 || atEdge) {
 				this.isCharging = false;
 				this.chargeTimer = 2 + Math.random();
 				this.chargeDistance = 0;
